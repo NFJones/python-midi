@@ -32,7 +32,7 @@ feature set to offer.
 Follow the [http://docs.python.org/2/install/index.html normal procedure for Python module installation]:
 
 <pre>
-python setup.py install
+python3 setup.py install
 </pre>
 
 ===Examine a MIDI File===
@@ -43,7 +43,7 @@ To examine the contents of a MIDI file run
 $ mididump.py mary.mid
 </pre>
 
-This will print out a representation of "Mary had a Little Lamb" as executable python code.
+This will print out a representation of "Mary had a Little Lamb" as executable python3 code.
 
 ==Example Usage==
 
