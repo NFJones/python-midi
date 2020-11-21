@@ -3,7 +3,7 @@ def read_varlen(data):
     NEXTBYTE = 1
     value = 0
     while NEXTBYTE:
-        chr = ord(next(data))
+        chr = next(data)
         # is the hi-bit set?
         if not (chr & 0x80):
             # no next BYTE
@@ -17,16 +17,16 @@ def read_varlen(data):
     return value
 
 def write_varlen(value):
-    chr1 = chr(value & 0x7F)
+    chr1 = bytes([(value & 0x7F)])
     value >>= 7
     if value:
-        chr2 = chr((value & 0x7F) | 0x80)
+        chr2 = bytes([(value & 0x7F) | 0x80])
         value >>= 7
         if value:
-            chr3 = chr((value & 0x7F) | 0x80)
+            chr3 = bytes([(value & 0x7F) | 0x80])
             value >>= 7
             if value:
-                chr4 = chr((value & 0x7F) | 0x80)
+                chr4 = bytes([(value & 0x7F) | 0x80])
                 res = chr4 + chr3 + chr2 + chr1
             else:
                 res = chr3 + chr2 + chr1

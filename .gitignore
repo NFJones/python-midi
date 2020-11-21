@@ -2,3 +2,7 @@ build
 *.pyc
 .coverage
 .*.sw?
+.vscode
+env
+.env
+*.egg-info
