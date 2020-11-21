@@ -72,7 +72,7 @@ class Sequencer(object):
     def _error(self, errcode):
         strerr = S.snd_strerror(errcode)
         msg = "ALSAError[%d]: %s" % (errcode, strerr)
-        raise RuntimeError, msg
+        raise RuntimeError(msg)
 
     def _init_handle(self):
         ret = S.open_client(self.alsa_sequencer_name,
@@ -269,7 +269,7 @@ class Sequencer(object):
             seqev.data.control.value = event.pitch
         ## Unknown
         else:
-            print "Warning :: Unknown event type: %s" % event
+            print("Warning :: Unknown event type: %s" % event)
             return None
             
         err = S.snd_seq_event_output(self.client, seqev)
@@ -324,7 +324,7 @@ class SequencerHardware(Sequencer):
             self._ports[name] = port
 
         def __iter__(self):
-            return self._ports.itervalues()
+            return iter(self._ports.values())
 
         def __len__(self):
             return len(self._ports)
@@ -360,7 +360,7 @@ class SequencerHardware(Sequencer):
         self._query_clients()
 
     def __iter__(self):
-        return self._clients.itervalues()
+        return iter(self._clients.values())
 
     def __len__(self):
         return len(self._clients)
