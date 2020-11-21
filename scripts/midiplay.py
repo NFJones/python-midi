@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Attach to a MIDI device and send the contents of a MIDI file to it.
 """

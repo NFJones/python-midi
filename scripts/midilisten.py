@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Attach to a MIDI device and print events to standard output.
 """
