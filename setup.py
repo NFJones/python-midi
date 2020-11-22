@@ -5,8 +5,8 @@ from setuptools import setup, Extension
 import setuptools.command.install
 
 __base__ = {
-    'name':'midi', 
-    'version':'v0.2.3',
+    'name':'python3_midi', 
+    'version':'v0.2.4',
     'python_requires':'>=3.5',
     'description':'Python MIDI API',
     'author':'giles hall',
