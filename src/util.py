@@ -1,4 +1,3 @@
-
 def read_varlen(data):
     NEXTBYTE = 1
     value = 0
@@ -9,12 +8,13 @@ def read_varlen(data):
             # no next BYTE
             NEXTBYTE = 0
         # mask out the 8th bit
-        chr = chr & 0x7f
+        chr = chr & 0x7F
         # shift last value up 7 bits
         value = value << 7
         # add new value
         value += chr
     return value
+
 
 def write_varlen(value):
     chr1 = bytearray([(value & 0x7F)])

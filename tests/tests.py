@@ -9,20 +9,22 @@ try:
 except ImportError:
     sequencer = None
 
+
 def get_sequencer_type():
     if sequencer == None:
         return None
     return sequencer.Sequencer.SEQUENCER_TYPE
 
+
 class TestMIDI(unittest.TestCase):
-    def test_varlen(self): 
+    def test_varlen(self):
         maxval = 0x0FFFFFFF
         for inval in range(0, maxval, maxval // 1000):
             datum = midi.write_varlen(inval)
             outval = midi.read_varlen(iter(datum))
             self.assertEqual(inval, outval)
 
-    def test_mary(self): 
+    def test_mary(self):
         midi.write_midifile("mary.mid", mary_test.MARY_MIDI)
         pattern1 = midi.read_midifile("mary.mid")
         midi.write_midifile("mary.mid", pattern1)
@@ -36,6 +38,7 @@ class TestMIDI(unittest.TestCase):
                 self.assertEqual(event1.tick, event2.tick)
                 self.assertEqual(event1.data, event2.data)
 
+
 class TestSequencerALSA(unittest.TestCase):
     TEMPO = 120
     RESOLUTION = 1000
@@ -47,7 +50,7 @@ class TestSequencerALSA(unittest.TestCase):
         assert loop != None, "Could not find Midi Through port!"
         loop_port = loop.get_port("Midi Through Port-0")
         return (loop.client, loop_port.port)
-    
+
     def get_reader_sequencer(self):
         (client, port) = self.get_loop_client_port()
         seq = sequencer.SequencerRead(sequencer_resolution=self.RESOLUTION)
@@ -59,9 +62,14 @@ class TestSequencerALSA(unittest.TestCase):
         seq = sequencer.SequencerWrite(sequencer_resolution=self.RESOLUTION)
         seq.subscribe_port(client, port)
         return seq
-    
-    @unittest.skipIf(get_sequencer_type() != "alsa", "ALSA Sequencer not found, skipping test")
-    @unittest.skipIf(not os.path.exists("/dev/snd/seq"), "/dev/snd/seq is not available, skipping test")
+
+    @unittest.skipIf(
+        get_sequencer_type() != "alsa", "ALSA Sequencer not found, skipping test"
+    )
+    @unittest.skipIf(
+        not os.path.exists("/dev/snd/seq"),
+        "/dev/snd/seq is not available, skipping test",
+    )
     def test_loopback_sequencer(self):
         rseq = self.get_reader_sequencer()
         wseq = self.get_writer_sequencer()
@@ -80,7 +88,7 @@ class TestSequencerALSA(unittest.TestCase):
                 break
             if (now - start_time) > (2 * delay):
                 break
-            time.sleep(.01)
+            time.sleep(0.01)
         delta = now - start_time
         # make sure we received this event at the proper time
         self.assertGreaterEqual(delta, delay)
@@ -88,5 +96,6 @@ class TestSequencerALSA(unittest.TestCase):
         self.assertEqual(send_event.data, recv_event.data)
         self.assertEqual(send_event.__class__, recv_event.__class__)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

@@ -6,17 +6,18 @@ from struct import unpack, pack
 from .constants import *
 from .util import *
 
+
 class FileReader(object):
     def read(self, midifile):
         pattern = self.parse_file_header(midifile)
         for track in pattern:
             self.parse_track(midifile, track)
         return pattern
-        
+
     def parse_file_header(self, midifile):
         # First four bytes are MIDI header
         magic = midifile.read(4)
-        if magic != b'MThd':
+        if magic != b"MThd":
             raise TypeError("Bad header in MIDI file.")
         # next four bytes are header size
         # next two bytes specify the format version
@@ -33,11 +34,11 @@ class FileReader(object):
         if hdrsz > DEFAULT_MIDI_HEADER_SIZE:
             midifile.read(hdrsz - DEFAULT_MIDI_HEADER_SIZE)
         return Pattern(tracks=tracks, resolution=resolution, format=format)
-            
+
     def parse_track_header(self, midifile):
         # First four bytes are Track header
         magic = midifile.read(4)
-        if magic != b'MTrk':
+        if magic != b"MTrk":
             raise TypeError("Bad track header in MIDI file: " + magic)
         # next four bytes are track size
         tracksize = unpack(">L", midifile.read(4))[0]
@@ -99,6 +100,7 @@ class FileReader(object):
                 return cls(tick=tick, channel=channel, data=data)
         raise Warning("Unknown MIDI Event: " + repr(stsmsg))
 
+
 class FileWriter(object):
     def write(self, midifile, pattern):
         self.write_file_header(midifile, pattern)
@@ -107,14 +109,11 @@ class FileWriter(object):
 
     def write_file_header(self, midifile, pattern):
         # First four bytes are MIDI header
-        packdata = pack(">LHHH", 6,    
-                            pattern.format, 
-                            len(pattern),
-                            pattern.resolution)
-        midifile.write(b'MThd' + packdata)
+        packdata = pack(">LHHH", 6, pattern.format, len(pattern), pattern.resolution)
+        midifile.write(b"MThd" + packdata)
 
     def write_track(self, midifile, track):
-        buf = b''
+        buf = b""
         self.RunningStatus = None
         for event in track:
             buf += self.encode_midi_event(event)
@@ -122,10 +121,10 @@ class FileWriter(object):
         midifile.write(buf)
 
     def encode_track_header(self, tracklength):
-        return b'MTrk' + pack(">L", tracklength)
+        return b"MTrk" + pack(">L", tracklength)
 
     def encode_midi_event(self, event):
-        ret = b''
+        ret = b""
         ret += write_varlen(event.tick)
         # is the event a MetaEvent?
         if isinstance(event, MetaEvent):
@@ -139,24 +138,28 @@ class FileWriter(object):
             ret += bytearray([0xF7])
         # not a Meta MIDI event or a Sysex event, must be a general message
         elif isinstance(event, Event):
-            if not self.RunningStatus or \
-                self.RunningStatus.statusmsg != event.statusmsg or \
-                self.RunningStatus.channel != event.channel:
-                    self.RunningStatus = event
-                    ret += bytearray([event.statusmsg | event.channel])
+            if (
+                not self.RunningStatus
+                or self.RunningStatus.statusmsg != event.statusmsg
+                or self.RunningStatus.channel != event.channel
+            ):
+                self.RunningStatus = event
+                ret += bytearray([event.statusmsg | event.channel])
             ret += bytearray(event.data)
         else:
             raise ValueError("Unknown MIDI Event: " + str(event))
         return ret
 
+
 def write_midifile(midifile, pattern):
     if type(midifile) in (str, str):
-        midifile = open(midifile, 'wb')
+        midifile = open(midifile, "wb")
     writer = FileWriter()
     return writer.write(midifile, pattern)
 
+
 def read_midifile(midifile):
     if type(midifile) in (str, str):
-        midifile = open(midifile, 'rb')
+        midifile = open(midifile, "rb")
     reader = FileReader()
     return reader.read(midifile)

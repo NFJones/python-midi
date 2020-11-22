@@ -21,8 +21,7 @@ class TempoMap(list):
         last = None
         for event in self:
             if last:
-                event.msdelay = last.msdelay + \
-                    int(last.mpt * (event.tick - last.tick))
+                event.msdelay = last.msdelay + int(last.mpt * (event.tick - last.tick))
             last = event
 
     def get_tempo(self, offset=0):
@@ -32,6 +31,7 @@ class TempoMap(list):
                 return last
             last = tm
         return last
+
 
 class EventStreamIterator(object):
     def __init__(self, stream, window):
@@ -95,4 +95,3 @@ class EventStreamIterator(object):
                 return ret
             ret.append(event)
         return ret
-
