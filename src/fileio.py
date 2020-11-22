@@ -111,8 +111,8 @@ class FileWriter(object):
                             pattern.format, 
                             len(pattern),
                             pattern.resolution)
-        midifile.write(b'MThd%s' % packdata)
-            
+        midifile.write(b'MThd' + packdata)
+
     def write_track(self, midifile, track):
         buf = b''
         self.RunningStatus = None
@@ -122,29 +122,29 @@ class FileWriter(object):
         midifile.write(buf)
 
     def encode_track_header(self, tracklength):
-        return b'MTrk%s' % pack(">L", tracklength)
+        return b'MTrk' + pack(">L", tracklength)
 
     def encode_midi_event(self, event):
         ret = b''
         ret += write_varlen(event.tick)
         # is the event a MetaEvent?
         if isinstance(event, MetaEvent):
-            ret += bytes([event.statusmsg]) + bytes([event.metacommand])
+            ret += bytearray([event.statusmsg]) + bytearray([event.metacommand])
             ret += write_varlen(len(event.data))
-            ret += bytes(event.data)
+            ret += bytearray(event.data)
         # is this event a Sysex Event?
         elif isinstance(event, SysexEvent):
-            ret += bytes([0xF0])
-            ret += bytes(event.data)
-            ret += bytes([0xF7])
+            ret += bytearray([0xF0])
+            ret += bytearray(event.data)
+            ret += bytearray([0xF7])
         # not a Meta MIDI event or a Sysex event, must be a general message
         elif isinstance(event, Event):
             if not self.RunningStatus or \
                 self.RunningStatus.statusmsg != event.statusmsg or \
                 self.RunningStatus.channel != event.channel:
                     self.RunningStatus = event
-                    ret += bytes([event.statusmsg | event.channel])
-            ret += bytes(event.data)
+                    ret += bytearray([event.statusmsg | event.channel])
+            ret += bytearray(event.data)
         else:
             raise ValueError("Unknown MIDI Event: " + str(event))
         return ret
