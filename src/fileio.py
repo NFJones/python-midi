@@ -7,7 +7,7 @@ from .constants import *
 from .util import *
 
 
-class FileReader(object):
+class FileReader:
     def read(self, midifile):
         pattern = self.parse_file_header(midifile)
         for track in pattern:
@@ -113,12 +113,16 @@ class FileWriter(object):
         midifile.write(b"MThd" + packdata)
 
     def write_track(self, midifile, track):
-        buf = b""
         self.RunningStatus = None
+        track_pos = midifile.tell()
+        midifile.write(self.encode_track_header(0))
+        start_pos = midifile.tell()
         for event in track:
-            buf += self.encode_midi_event(event)
-        buf = self.encode_track_header(len(buf)) + buf
-        midifile.write(buf)
+            midifile.write(self.encode_midi_event(event))
+        end_pos = midifile.tell()
+        midifile.seek(track_pos)
+        midifile.write(self.encode_track_header(end_pos - start_pos))
+        midifile.seek(end_pos)
 
     def encode_track_header(self, tracklength):
         return b"MTrk" + pack(">L", tracklength)
@@ -163,3 +167,76 @@ def read_midifile(midifile):
         midifile = open(midifile, "rb")
     reader = FileReader()
     return reader.read(midifile)
+
+
+class FileStream(FileWriter, FileReader):
+    def __init__(self, outfile):
+        self.midifile = open(outfile, "w+b")
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.close()
+
+    def start_pattern(self, **kwargs):
+        self.pattern_pos = self.midifile.tell()
+        self.pattern = Pattern(**kwargs)
+        self.write_file_header(self.midifile, self.pattern)
+
+    def start_track(self, **kwargs):
+        self.RunningStatus = None
+        self.pattern.append(Track(**kwargs))
+        self.track_pos = self.midifile.tell()
+        self.midifile.write(self.encode_track_header(0))
+        self.start_pos = self.midifile.tell()
+
+    def add_event(self, event):
+        ret = self.midifile.tell()
+        if hasattr(self.RunningStatus, "statusmsg"):
+            self.RunningStatus.statusmsg = event.statusmsg
+        self.midifile.write(self.encode_midi_event(event))
+        return ret
+
+    def trackdata(self):
+        b = self.midifile.read(1)
+        while b:
+            yield bytearray(b)[0]
+            b = self.midifile.read(1)
+
+    def get_event(self, type, pos):
+        end_pos = self.midifile.tell()
+        self.midifile.seek(pos)
+        running_status = self.RunningStatus
+        self.RunningStatus = type.statusmsg
+        event = self.parse_midi_event(self.trackdata())
+        self.RunningStatus = running_status
+        self.midifile.seek(end_pos)
+        return event
+
+    def set_event(self, event, pos):
+        current_event = self.get_event(event.__class__, pos)
+        if type(current_event) != type(event):
+            raise RuntimeError(
+                "MIDI event type mismatch: {} != {}".format(
+                    type(event), type(current_event)
+                )
+            )
+        end_pos = self.midifile.tell()
+        self.midifile.seek(pos)
+        self.add_event(event)
+        self.midifile.seek(end_pos)
+
+    def end_track(self):
+        end_pos = self.midifile.tell()
+        self.midifile.seek(self.track_pos)
+        self.midifile.write(self.encode_track_header(end_pos - self.start_pos))
+        self.midifile.seek(end_pos)
+
+    def end_pattern(self):
+        self.midifile.seek(self.pattern_pos)
+        self.write_file_header(self.midifile, self.pattern)
+        self.close()
+
+    def close(self):
+        self.midifile.close()
